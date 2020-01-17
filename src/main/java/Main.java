@@ -1,9 +1,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Main {
 
@@ -11,7 +9,8 @@ public class Main {
     static State q0, q1, q2, q3, q4;
     static State qa, qb, qc, qe, qf;
 
-    static State currentState;
+    static List<State> currentStates = new LinkedList<>();
+    static List<State> statesToAdd;
 
     static List<State> states = new ArrayList<>();
     static String[] inputList;
@@ -50,29 +49,54 @@ public class Main {
         System.out.print("\n");
 
         for (String input : inputList) {  // każde wejście
-            currentState = qs;
+            currentStates.add(qs);
             for (int i = 0; i < input.length(); i++) {  // każda cyfra/litera
-                System.out.println(currentState.stateName + "(" + input.charAt(i) + ")" + " -> " + currentState.getNextState(input.charAt(i)));
-                if (!currentState.getNextState(input.charAt(i)).equals("x")) {
-                    currentState = statesMap.get(currentState.getNextState(input.charAt(i)));
-                } else {
-                    currentState = qs;
-                    i--;
+                statesToAdd = new LinkedList<>();
+                for (int j = 0; j < currentStates.size();  j++) {
+                    if (currentStates.get(j).isActive) {
+                        if (currentStates.get(j).getStateName().equals("qs")) {
+                            System.out.println(currentStates.get(j).stateName + "(" + input.charAt(i) + ")" + " -> qs");
+                        }
+                        System.out.println(currentStates.get(j).stateName + "(" + input.charAt(i) + ")" + " -> " + currentStates.get(j).getNextState(input.charAt(i)));
+                        if (!currentStates.get(j).getNextState(input.charAt(i)).equals("x")) {
+                            if (!currentStates.get(j).getStateName().equals(currentStates.get(j).getNextState(input.charAt(i)))) {
+                                statesToAdd.add(statesMap.get(currentStates.get(j).getNextState(input.charAt(i))));
+                            }
+                        } else {
+                            currentStates.get(j).setActive(false);
+                        }
+                    }
                 }
+                currentStates.addAll(statesToAdd);
+                System.out.println("");
             }
 
-            if (currentState.stateName.equals("qF1")) {
+
+            if (currentStates.contains(qF1) && currentStates.contains(qF2)) {
+                System.out.println("Automat akceptuje słowo: " + input + " (powtórzyła się cyfra i litera)");
+            } else if (currentStates.contains(qF1)) {
                 System.out.println("Automat akceptuje słowo: " + input + " (powtórzyła się cyfra)");
-            } else if (currentState.stateName.equals("qF2")) {
+            } else if (currentStates.contains(qF2)) {
                 System.out.println("Automat akceptuje słowo: " + input + " (powtórzyła się litera)");
             } else {
                 System.out.println("Automat nie akceptuje słowa: " + input);
             }
             System.out.print("\n");
+            currentStates = new LinkedList<>();
 
         }
 
 
+    }
+
+//     if (!currentStates.get(j).getStateName().equals("qF1") && !currentStates.get(j).getNextState(input.charAt(i)).equals("qF1"))
+
+    public static boolean checkIfStateExist(List<State> currentStates, String stateName) {
+        List<State> filtredList = currentStates.stream().filter(state -> state.getStateName().equals(stateName)).collect(Collectors.toList());
+        if (filtredList.size() != 0)
+            return false;
+        else
+            return true;
     }
 
     public static void createStatesRules() {
